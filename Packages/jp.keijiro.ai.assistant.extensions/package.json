@@ -2,9 +2,13 @@
   "name": "jp.keijiro.ai.assistant.extensions",
   "version": "1.0.0",
   "displayName": "AI Assistant Extensions",
-  "description": "AI Assistant Extensions",
+  "description": "Custom Unity package that provides extensions for Unity AI Assistant.",
   "unity": "6000.0",
   "author": "Keijiro Takahashi",
-  "dependencies": { "com.unity.ai.assistant": "2.1.0-pre.1" },
-  "license": "Unlicense"
+  "dependencies": { "com.unity.ai.assistant": "2.6.0-pre.1" },
+  "changelogUrl": "https://github.com/keijiro/AIA-Extensions/blob/master/CHANGELOG.md",
+  "documentationUrl": "https://github.com/keijiro/AIA-Extensions",
+  "licensesUrl": "https://github.com/keijiro/AIA-Extensions/blob/master/LICENSE",
+  "license": "Unlicense",
+  "_upm": { "changelog": "- Initial release." }
 }

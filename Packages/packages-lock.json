@@ -185,7 +185,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.unity.ai.assistant": "2.1.0-pre.1"
+        "com.unity.ai.assistant": "2.6.0-pre.1"
       }
     },
     "jp.keijiro.kino.post-processing.eight.universal": {
