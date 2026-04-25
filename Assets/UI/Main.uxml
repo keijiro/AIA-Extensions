@@ -1,2 +1,10 @@
-<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Style src="project://database/Assets/UI/Main.uss" />
+    <ui:VisualElement name="container" class="container">
+        <ui:Label name="testLabel" text="Test Label" class="test-label" />
+        <ui:Button name="testButton" text="Test Button" class="test-button" />
+    </ui:VisualElement>
 </ui:UXML>
+
+
+
