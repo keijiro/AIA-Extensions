@@ -19,6 +19,12 @@ field to the AI Assistant chat field and sends the message when you press
 **Conversation Extractor** is a utility that extracts the conversation log
 between the user and Unity AI Assistant from `Logs/relay.txt`.
 
+## Game View Capture Skill
+
+**Game View Capture Skill** lets Unity AI Assistant capture the Game view and
+inspect the rendered image. It is useful for checking camera composition,
+visual effects, and screen-space UI without entering Play Mode.
+
 ## Font Modifier
 
 This package includes `AssistantFontModifier`, which replaces the fonts used in
