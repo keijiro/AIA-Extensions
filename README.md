@@ -2,6 +2,16 @@
 
 **AIA Extensions** is a custom Unity package that extends Unity AI Assistant.
 
+## Installation
+
+Send the following prompt to the AI Assistant:
+
+```
+Install jp.keijiro.ai.assistant.extensions via Package Manager.
+If the Keijiro scoped registry is missing, add:
+Name Keijiro, URL https://registry.npmjs.com, Scope jp.keijiro.
+```
+
 ## IME Proxy
 
 <img width="400" height="284" alt="IME Proxy" src="https://github.com/user-attachments/assets/a6b5146d-1b63-47dd-ab4d-633357996974" />
