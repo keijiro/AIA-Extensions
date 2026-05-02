@@ -10,10 +10,10 @@ namespace AIAssistantExtensions {
 
 static class PackageSkillRegistrar
 {
-    static readonly string[] SkillNames = { "game-view-capture", "game-view-ui-capture" };
-
     // The settings UI only displays Project/User/Internal source tags.
     const string SkillTag = "Skills.User.Filesystem.Project";
+    const string PackageSkillTag =
+      "Skills.User.Filesystem.Project.Package.AIAssistantExtensions";
 
     const string SkillPath =
       "Packages/jp.keijiro.ai.assistant.extensions/Skills/GameViewCapture/SKILL.md";
@@ -40,7 +40,8 @@ static class PackageSkillRegistrar
                 return;
 
             AddTag(skill, SkillTag);
-            RemoveExistingSkill();
+            AddTag(skill, PackageSkillTag);
+            RemoveExistingSkills();
             AddSkills(skill);
         }
         catch (Exception ex)
@@ -114,21 +115,23 @@ static class PackageSkillRegistrar
         method.Invoke(null, new object[] { list, null });
     }
 
-    static void RemoveExistingSkill()
+    static void RemoveExistingSkills()
     {
         var registryType = FindType("Unity.AI.Assistant.Skills.SkillsRegistry");
         if (registryType == null)
             return;
 
+        RemoveByTag(registryType, PackageSkillTag);
+    }
+
+    static void RemoveByTag(Type registryType, string tag)
+    {
         var method = registryType.GetMethod
-          ("GetSkills", BindingFlags.Static | BindingFlags.Public);
-        var skills = method?.Invoke(null, null) as IDictionary;
-        if (skills == null)
+          ("RemoveByTag", BindingFlags.Static | BindingFlags.Public);
+        if (method == null)
             return;
 
-        foreach (var skillName in SkillNames)
-            if (skills.Contains(skillName))
-                skills.Remove(skillName);
+        method.Invoke(null, new object[] { tag });
     }
 
     static Type FindType(string fullName)
