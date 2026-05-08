@@ -1,8 +1,6 @@
 ---
 name: game-view-capture
 description: Capture the Unity Game view in Edit Mode so Assistant can visually inspect the rendered game output without entering Play Mode.
-required_packages:
-  com.unity.ai.assistant: 2.7.0-pre.1
 tools:
   - Unity.RunCommand
   - Unity.FindProjectAssets
