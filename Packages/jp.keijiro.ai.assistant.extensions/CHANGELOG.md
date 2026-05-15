@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.1.3] - 2026-05-15
+
+### Fixed
+
+- Fixed package skill registration for AI Assistant 2.8.0-pre.1 by using the built-in package skill discovery path.
+
+### Changed
+
+- Updated project and package metadata for AI Assistant 2.8.0-pre.1.
+
 ## [1.1.2] - 2026-05-08
 
 ### Fixed

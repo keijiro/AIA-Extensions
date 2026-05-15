@@ -1,6 +1,6 @@
 {
   "name": "jp.keijiro.ai.assistant.extensions",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "displayName": "AI Assistant Extensions",
   "description": "Custom Unity package that provides extensions for Unity AI Assistant.",
   "unity": "6000.0",
@@ -11,6 +11,6 @@
   "licensesUrl": "https://github.com/keijiro/AIA-Extensions/blob/master/LICENSE",
   "license": "Unlicense",
   "_upm": {
-    "changelog": "<b>Fixed</b><br>- Fixed `game-view-capture` skill compatibility with AI Assistant 2.7.0-pre.2 by removing redundant package requirement metadata.<br><br><b>Changed</b><br>- Updated project and package metadata for AI Assistant 2.7.0-pre.2."
+    "changelog": "<b>Fixed</b><br>- Fixed package skill registration for AI Assistant 2.8.0-pre.1 by using the built-in package skill discovery path.<br><br><b>Changed</b><br>- Updated project and package metadata for AI Assistant 2.8.0-pre.1."
   }
 }
