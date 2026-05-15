@@ -5,7 +5,7 @@
   "description": "Custom Unity package that provides extensions for Unity AI Assistant.",
   "unity": "6000.0",
   "author": "Keijiro Takahashi",
-  "dependencies": { "com.unity.ai.assistant": "2.7.0-pre.2" },
+  "dependencies": { "com.unity.ai.assistant": "2.8.0-pre.1" },
   "changelogUrl": "https://github.com/keijiro/AIA-Extensions/blob/master/CHANGELOG.md",
   "documentationUrl": "https://github.com/keijiro/AIA-Extensions",
   "licensesUrl": "https://github.com/keijiro/AIA-Extensions/blob/master/LICENSE",
