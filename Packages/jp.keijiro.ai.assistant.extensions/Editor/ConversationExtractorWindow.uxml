@@ -1,0 +1,23 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
+    <Style src="project://database/Packages/jp.keijiro.ai.assistant.extensions/Editor/ConversationExtractorWindow.uss?fileID=7433441132597879392&amp;guid=f6331e5dc7a84404baedc43bf6c5b522&amp;type=3#ConversationExtractorWindow"/>
+    <uie:Toolbar>
+        <uie:ToolbarButton name="refresh-button" text="Refresh"/>
+        <ui:VisualElement class="spacer"/>
+        <uie:ToolbarButton name="copy-button" text="Copy"/>
+        <uie:ToolbarButton name="save-button" text="Save"/>
+    </uie:Toolbar>
+    <ui:TwoPaneSplitView name="split" orientation="Horizontal" fixed-pane-index="0" fixed-pane-initial-dimension="240" view-data-key="split" class="split">
+        <ui:VisualElement name="left-pane" class="pane">
+            <ui:Label name="list-header" class="header"/>
+            <ui:ListView name="conversation-list" view-data-key="list" fixed-item-height="38" selection-type="Single" class="list"/>
+            <ui:Label name="empty-label" class="empty"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="right-pane" class="pane">
+            <ui:VisualElement name="preview-header" class="preview-header">
+                <ui:Label text="Extracted Markdown" class="header"/>
+                <ui:Toggle name="toolcalls-toggle" text="Tool Calls" class="toolcalls"/>
+            </ui:VisualElement>
+            <ui:TextField name="preview" multiline="true" readonly="true" vertical-scroller-visibility="Auto" focusable="false" class="preview"/>
+        </ui:VisualElement>
+    </ui:TwoPaneSplitView>
+</ui:UXML>

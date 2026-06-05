@@ -1,0 +1,80 @@
+.unity-text-element {
+    -unity-font-definition: url("project://database/Packages/jp.keijiro.ai.assistant.extensions/Editor/NotoSansJP-Regular.ttf?fileID=12800000&guid=f7d2dd1a328194df9b71491ff2d07e2b&type=3#NotoSansJP-Regular");
+}
+
+.spacer {
+    flex-grow: 1;
+}
+
+.split {
+    flex-grow: 1;
+}
+
+#left-pane {
+    min-width: 150px;
+}
+
+#right-pane {
+    min-width: 200px;
+}
+
+.pane {
+    flex-grow: 1;
+    min-height: 0;
+    padding: 4px;
+}
+
+.header {
+    -unity-font-style: bold;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
+.preview-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.toolcalls {
+    margin-bottom: 2px;
+}
+
+.empty {
+    white-space: normal;
+    opacity: 0.6;
+    margin: 4px;
+}
+
+.list {
+    flex-grow: 1;
+}
+
+.preview {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+}
+
+.preview .unity-base-text-field__input {
+    white-space: normal;
+    -unity-text-align: upper-left;
+}
+
+.row {
+    justify-content: center;
+    padding-left: 6px;
+    padding-right: 6px;
+}
+
+.row-title {
+    -unity-font-style: bold;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.row-date {
+    font-size: 10px;
+    opacity: 0.65;
+}

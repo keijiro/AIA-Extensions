@@ -8,7 +8,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace AIAssistantExtensions {
 
@@ -19,6 +21,11 @@ namespace AIAssistantExtensions {
 // is open, so that window must be open for this to work.
 class ConversationExtractorWindow : EditorWindow
 {
+    const string AssetDir = "Packages/jp.keijiro.ai.assistant.extensions/Editor/";
+    const string UxmlPath = AssetDir + "ConversationExtractorWindow.uxml";
+    const string RowUxmlPath = AssetDir + "ConversationRow.uxml";
+    const string UssPath = AssetDir + "ConversationExtractorWindow.uss";
+
     const string AssistantWindowTypeName = "Unity.AI.Assistant.UI.Editor.Scripts.AssistantWindow";
     const int EventTimeoutMs = 20000;
 
@@ -35,13 +42,25 @@ class ConversationExtractorWindow : EditorWindow
     }
 
     readonly List<ConversationItem> _conversations = new();
-    int _selectedIndex = -1;
 
-    Vector2 _listScroll;
-    Vector2 _textScroll;
+    object _loadedConversation;  // last loaded conversation, for rebuilding without re-fetching
     string _markdown;
-    string _status;
+    string _status;      // right pane: extraction lifecycle only
+    string _listStatus;  // left pane: empty-state message
     bool _busy;
+    bool _extracting;
+    bool _includeToolCalls = true;
+
+    // UI elements (resolved in CreateGUI).
+    VisualTreeAsset _rowTemplate;
+    ToolbarButton _refreshButton;
+    Toggle _toolCallsToggle;
+    ToolbarButton _copyButton;
+    ToolbarButton _saveButton;
+    Label _listHeader;
+    Label _emptyLabel;
+    ListView _listView;
+    TextField _preview;
 
     // Event plumbing shared with the reflection callbacks.
     Delegate _refreshedHandler;
@@ -55,66 +74,142 @@ class ConversationExtractorWindow : EditorWindow
     {
         var window = GetWindow<ConversationExtractorWindow>();
         window.titleContent = new GUIContent("Conversation Extractor");
-        window.minSize = new Vector2(480, 360);
+        window.minSize = new Vector2(640, 360);
     }
 
-    void OnGUI()
+    // --- UI construction ----------------------------------------------------
+
+    void CreateGUI()
     {
-        using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
+        var tree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(UxmlPath);
+        if (tree == null)
         {
-            using (new EditorGUI.DisabledScope(_busy))
-            {
-                if (GUILayout.Button("Refresh", EditorStyles.toolbarButton))
-                    _ = RefreshList();
-            }
-
-            GUILayout.FlexibleSpace();
-
-            using (new EditorGUI.DisabledScope(_busy || string.IsNullOrEmpty(_markdown)))
-            {
-                if (GUILayout.Button("Copy", EditorStyles.toolbarButton))
-                    CopyToClipboard();
-                if (GUILayout.Button("Save", EditorStyles.toolbarButton))
-                    SaveMarkdown();
-            }
+            rootVisualElement.Add(new Label($"Layout asset not found: {UxmlPath}"));
+            return;
         }
 
-        if (!string.IsNullOrEmpty(_status))
-            EditorGUILayout.HelpBox(_status, _busy ? MessageType.Info : MessageType.None);
+        tree.CloneTree(rootVisualElement);
 
-        DrawConversationList();
+        var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(UssPath);
+        if (styleSheet != null)
+            rootVisualElement.styleSheets.Add(styleSheet);
 
-        EditorGUILayout.LabelField("Extracted Markdown", EditorStyles.boldLabel);
-        using var scroll = new EditorGUILayout.ScrollViewScope(_textScroll);
-        _textScroll = scroll.scrollPosition;
-        EditorGUILayout.TextArea(_markdown ?? "", GUILayout.ExpandHeight(true));
+        _rowTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(RowUxmlPath);
+
+        _refreshButton = rootVisualElement.Q<ToolbarButton>("refresh-button");
+        _toolCallsToggle = rootVisualElement.Q<Toggle>("toolcalls-toggle");
+        _copyButton = rootVisualElement.Q<ToolbarButton>("copy-button");
+        _saveButton = rootVisualElement.Q<ToolbarButton>("save-button");
+        _listHeader = rootVisualElement.Q<Label>("list-header");
+        _emptyLabel = rootVisualElement.Q<Label>("empty-label");
+        _listView = rootVisualElement.Q<ListView>("conversation-list");
+        _preview = rootVisualElement.Q<TextField>("preview");
+
+        _refreshButton.clicked += () => { if (!_busy) _ = RefreshList(); };
+        _copyButton.clicked += CopyToClipboard;
+        _saveButton.clicked += SaveMarkdown;
+
+        _toolCallsToggle.SetValueWithoutNotify(_includeToolCalls);
+        _toolCallsToggle.RegisterValueChangedCallback(evt => OnToolCallsChanged(evt.newValue));
+
+        _listView.itemsSource = _conversations;
+        _listView.makeItem = MakeRow;
+        _listView.bindItem = BindRow;
+        _listView.selectionChanged += OnSelectionChanged;
+
+        UpdateToolbar();
+        UpdateList();
+        UpdatePreview();
+
+        _ = RefreshList();
     }
 
-    void DrawConversationList()
+    VisualElement MakeRow()
     {
-        EditorGUILayout.LabelField($"Conversations ({_conversations.Count})", EditorStyles.boldLabel);
+        if (_rowTemplate != null)
+            return _rowTemplate.Instantiate();
 
-        using var scroll = new EditorGUILayout.ScrollViewScope(
-          _listScroll, GUILayout.Height(Mathf.Max(80f, position.height * 0.35f)));
-        _listScroll = scroll.scrollPosition;
+        var container = new VisualElement();
+        container.Add(new Label { name = "row-title" });
+        container.Add(new Label { name = "row-date" });
+        return container;
+    }
 
-        using (new EditorGUI.DisabledScope(_busy))
-        {
-            for (var i = 0; i < _conversations.Count; i++)
-            {
-                var item = _conversations[i];
-                var label = (item.Favorite ? "★ " : "") + DisplayTitle(item.Title);
-                var date = FormatDate(item.Timestamp);
-                if (!string.IsNullOrEmpty(date)) label += $"    ({date})";
+    void BindRow(VisualElement element, int index)
+    {
+        var item = _conversations[index];
 
-                var selected = i == _selectedIndex;
-                if (GUILayout.Toggle(selected, label, "Button") && !selected)
-                {
-                    _selectedIndex = i;
-                    _ = ExtractConversation(item);
-                }
-            }
-        }
+        var title = element.Q<Label>("row-title");
+        title.text = (item.Favorite ? "★ " : "") + DisplayTitle(item.Title);
+
+        var date = element.Q<Label>("row-date");
+        var formatted = FormatDate(item.Timestamp);
+        date.text = formatted;
+        date.style.display = string.IsNullOrEmpty(formatted) ? DisplayStyle.None : DisplayStyle.Flex;
+    }
+
+    void OnSelectionChanged(IEnumerable<object> selection)
+    {
+        if (_busy) return;
+
+        var index = _listView.selectedIndex;
+        if (index >= 0 && index < _conversations.Count)
+            _ = ExtractConversation(_conversations[index]);
+    }
+
+    void OnToolCallsChanged(bool include)
+    {
+        _includeToolCalls = include;
+
+        // Rebuild from the already-loaded conversation; no need to re-fetch.
+        if (_busy || _loadedConversation == null) return;
+        _markdown = BuildConversationMarkdown(_loadedConversation, _includeToolCalls);
+        UpdateToolbar();
+        UpdatePreview();
+    }
+
+    // --- State -> UI --------------------------------------------------------
+
+    void UpdateToolbar()
+    {
+        _refreshButton?.SetEnabled(!_busy);
+
+        var hasMarkdown = !_busy && !string.IsNullOrEmpty(_markdown);
+        _copyButton?.SetEnabled(hasMarkdown);
+        _saveButton?.SetEnabled(hasMarkdown);
+    }
+
+    void UpdateList()
+    {
+        if (_listView == null) return;
+
+        _listHeader.text = $"Conversations ({_conversations.Count})";
+        _listView.Rebuild();
+
+        var empty = _conversations.Count == 0;
+        _listView.style.display = empty ? DisplayStyle.None : DisplayStyle.Flex;
+        _emptyLabel.style.display = empty ? DisplayStyle.Flex : DisplayStyle.None;
+        if (empty)
+            _emptyLabel.text = _busy
+              ? "Loading..."
+              : (string.IsNullOrEmpty(_listStatus) ? "No conversations." : _listStatus);
+    }
+
+    void UpdatePreview()
+    {
+        if (_preview == null) return;
+
+        // While extracting show the status text; otherwise the extracted markdown,
+        // or a hint when there is none.
+        string content;
+        if (_extracting)
+            content = _status;
+        else if (!string.IsNullOrEmpty(_markdown))
+            content = _markdown;
+        else
+            content = string.IsNullOrEmpty(_status) ? "Select a conversation to extract." : _status;
+
+        _preview.SetValueWithoutNotify(content ?? "");
     }
 
     // --- Operations ---------------------------------------------------------
@@ -123,33 +218,37 @@ class ConversationExtractorWindow : EditorWindow
     {
         object provider = null;
         _busy = true;
-        _status = "Refreshing conversation list...";
-        Repaint();
+        _listStatus = null;
+        UpdateToolbar();
+        UpdateList();
 
         try
         {
             provider = GetLiveProvider(out var error);
-            if (provider == null) { _status = error; return; }
+            if (provider == null) { _listStatus = error; return; }
 
             Subscribe(provider);
 
             _conversations.Clear();
             _conversations.AddRange((await RefreshConversations(provider))
               .OrderByDescending(c => c.Timestamp));
-            _selectedIndex = -1;
+            _loadedConversation = null;
             _markdown = "";
-            _status = $"Loaded {_conversations.Count} conversation(s). Select one to extract.";
+            _status = null;
+            _listView?.SetSelectionWithoutNotify(Array.Empty<int>());
         }
         catch (Exception e)
         {
-            _status = $"Failed to refresh: {e.Message}";
+            _listStatus = $"Failed to refresh: {e.Message}";
             Debug.LogException(e);
         }
         finally
         {
             Unsubscribe(provider);
             _busy = false;
-            Repaint();
+            UpdateToolbar();
+            UpdateList();
+            UpdatePreview();
         }
     }
 
@@ -157,22 +256,26 @@ class ConversationExtractorWindow : EditorWindow
     {
         object provider = null;
         _busy = true;
+        _extracting = true;
         _status = $"Extracting \"{DisplayTitle(item.Title)}\"...";
-        Repaint();
+        UpdateToolbar();
+        UpdatePreview();
 
         try
         {
             provider = GetLiveProvider(out var error);
-            if (provider == null) { _status = error; return; }
+            if (provider == null) { _markdown = ""; _status = error; return; }
 
             Subscribe(provider);
 
             var conversation = await LoadConversation(provider, item);
-            _markdown = BuildConversationMarkdown(conversation);
-            _status = $"Extracted \"{DisplayTitle(item.Title)}\".";
+            _loadedConversation = conversation;
+            _markdown = BuildConversationMarkdown(conversation, _includeToolCalls);
+            _status = null;
         }
         catch (Exception e)
         {
+            _loadedConversation = null;
             _markdown = "";
             _status = $"Extraction failed: {e.Message}";
             Debug.LogException(e);
@@ -181,26 +284,31 @@ class ConversationExtractorWindow : EditorWindow
         {
             Unsubscribe(provider);
             _busy = false;
-            Repaint();
+            _extracting = false;
+            UpdateToolbar();
+            UpdatePreview();
         }
     }
 
     void CopyToClipboard()
     {
         EditorGUIUtility.systemCopyBuffer = _markdown ?? "";
-        _status = "Copied extracted markdown to the clipboard.";
+        ShowNotification(new GUIContent("Copied to clipboard"));
     }
 
     void SaveMarkdown()
     {
         var projectRoot = Directory.GetParent(Application.dataPath)?.FullName ?? Directory.GetCurrentDirectory();
-        var name = _selectedIndex >= 0 ? SanitizeFileName(_conversations[_selectedIndex].Title) : "conversation";
+        var index = _listView?.selectedIndex ?? -1;
+        var name = index >= 0 && index < _conversations.Count
+          ? SanitizeFileName(_conversations[index].Title)
+          : "conversation";
         var defaultPath = Path.Combine(projectRoot, "Logs", $"{name}.md");
         var path = EditorUtility.SaveFilePanel("Save extracted conversation", Path.GetDirectoryName(defaultPath), Path.GetFileName(defaultPath), "md");
         if (string.IsNullOrEmpty(path)) return;
 
         File.WriteAllText(path, _markdown ?? "", Encoding.UTF8);
-        _status = $"Saved extracted markdown to {path}";
+        ShowNotification(new GUIContent($"Saved to {Path.GetFileName(path)}"));
     }
 
     // --- Live provider acquisition -----------------------------------------
@@ -328,7 +436,7 @@ class ConversationExtractorWindow : EditorWindow
 
     // --- Markdown building --------------------------------------------------
 
-    static string BuildConversationMarkdown(object conversation)
+    static string BuildConversationMarkdown(object conversation, bool includeToolCalls)
     {
         if (conversation == null) return "";
 
@@ -340,7 +448,7 @@ class ConversationExtractorWindow : EditorWindow
         {
             foreach (var message in messages)
             {
-                var text = ExtractMessageText(message);
+                var text = ExtractMessageText(message, includeToolCalls);
                 if (string.IsNullOrWhiteSpace(text)) continue;
 
                 var role = GetMember(message, "Role") as string;
@@ -352,23 +460,24 @@ class ConversationExtractorWindow : EditorWindow
         return builder.ToString();
     }
 
-    static string ExtractMessageText(object message)
+    static string ExtractMessageText(object message, bool includeToolCalls)
     {
         if (GetMember(message, "Blocks") is not IEnumerable blocks) return "";
 
         var parts = new List<string>();
         foreach (var block in blocks)
         {
-            var text = BlockText(block);
+            var text = BlockText(block, includeToolCalls);
             if (!string.IsNullOrWhiteSpace(text)) parts.Add(text.Trim());
         }
         return string.Join("\n\n", parts);
     }
 
     // Pulls text out of each block. Text-bearing blocks return their content;
-    // FunctionCallBlock is rendered as the tool name plus its parameters. The ACP
-    // tool-call / plan blocks carry structured data and are skipped.
-    static string BlockText(object block)
+    // FunctionCallBlock is rendered as the tool name plus its parameters (only when
+    // tool calls are included). The ACP tool-call / plan blocks carry structured
+    // data and are skipped.
+    static string BlockText(object block, bool includeToolCalls)
     {
         if (block == null) return null;
         return block.GetType().Name switch
@@ -378,7 +487,7 @@ class ConversationExtractorWindow : EditorWindow
             "ThoughtBlock" => GetMember(block, "Content") as string,
             "ErrorBlock" => GetMember(block, "Error") as string,
             "InfoBlock" => GetMember(block, "Message") as string,
-            "FunctionCallBlock" => FormatFunctionCall(GetMember(block, "Call")),
+            "FunctionCallBlock" => includeToolCalls ? FormatFunctionCall(GetMember(block, "Call")) : null,
             _ => null
         };
     }
