@@ -117,10 +117,8 @@ class ConversationExtractorWindow : EditorWindow
         _listView.bindItem = BindRow;
         _listView.selectionChanged += OnSelectionChanged;
 
-        UpdateToolbar();
-        UpdateList();
+        // Show the initial hint; RefreshList drives the toolbar and list state.
         UpdatePreview();
-
         _ = RefreshList();
     }
 
@@ -140,7 +138,9 @@ class ConversationExtractorWindow : EditorWindow
         var item = _conversations[index];
 
         var title = element.Q<Label>("row-title");
-        title.text = (item.Favorite ? "★ " : "") + DisplayTitle(item.Title);
+        // Titles can contain embedded newlines; collapse them so the row stays
+        // single-line (white-space:nowrap doesn't strip explicit line breaks).
+        title.text = (item.Favorite ? "★ " : "") + SingleLine(DisplayTitle(item.Title));
 
         var date = element.Q<Label>("row-date");
         var formatted = FormatDate(item.Timestamp);
@@ -514,6 +514,12 @@ class ConversationExtractorWindow : EditorWindow
 
     static string DisplayTitle(string title)
       => string.IsNullOrEmpty(title) ? "(Untitled)" : title;
+
+    // Collapses CR/LF runs to single spaces so a value renders on one line.
+    static string SingleLine(string text)
+      => string.IsNullOrEmpty(text)
+         ? text
+         : System.Text.RegularExpressions.Regex.Replace(text, @"\s+", " ").Trim();
 
     static string FormatRole(string role)
     {
