@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-06-05
+
+### Changed
+
+- Reworked the Conversation Extractor to read conversations through the AI Assistant in-process API instead of parsing the relay log.
+- Rebuilt the Conversation Extractor window with UI Toolkit, adding a resizable conversation list, per-conversation selection, a scrollable read-only transcript, and a toggle for including tool calls.
+- Updated project and package metadata for AI Assistant 2.11.0-pre.1.
+
 ## [1.1.3] - 2026-05-15
 
 ### Fixed

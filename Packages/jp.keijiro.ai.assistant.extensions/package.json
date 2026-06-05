@@ -1,6 +1,6 @@
 {
   "name": "jp.keijiro.ai.assistant.extensions",
-  "version": "1.1.3",
+  "version": "1.2.0",
   "displayName": "AI Assistant Extensions",
   "description": "Custom Unity package that provides extensions for Unity AI Assistant.",
   "unity": "6000.0",
@@ -11,6 +11,6 @@
   "licensesUrl": "https://github.com/keijiro/AIA-Extensions/blob/master/LICENSE",
   "license": "Unlicense",
   "_upm": {
-    "changelog": "<b>Fixed</b><br>- Fixed package skill registration for AI Assistant 2.8.0-pre.1 by using the built-in package skill discovery path.<br><br><b>Changed</b><br>- Updated project and package metadata for AI Assistant 2.8.0-pre.1."
+    "changelog": "<b>Changed</b><br>- Reworked the Conversation Extractor to read conversations through the AI Assistant in-process API instead of parsing the relay log.<br>- Rebuilt the Conversation Extractor window with UI Toolkit, adding a resizable conversation list, per-conversation selection, a scrollable read-only transcript, and a toggle for including tool calls.<br>- Updated project and package metadata for AI Assistant 2.11.0-pre.1."
   }
 }
