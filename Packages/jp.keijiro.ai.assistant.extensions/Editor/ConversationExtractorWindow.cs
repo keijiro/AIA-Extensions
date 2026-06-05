@@ -300,10 +300,11 @@ class ConversationExtractorWindow : EditorWindow
     {
         var projectRoot = Directory.GetParent(Application.dataPath)?.FullName ?? Directory.GetCurrentDirectory();
         var index = _listView?.selectedIndex ?? -1;
-        var name = index >= 0 && index < _conversations.Count
-          ? SanitizeFileName(_conversations[index].Title)
-          : "conversation";
-        var defaultPath = Path.Combine(projectRoot, "Logs", $"{name}.md");
+        var hasSelection = index >= 0 && index < _conversations.Count;
+        var name = hasSelection ? SanitizeFileName(_conversations[index].Title) : "conversation";
+        var stamp = hasSelection ? FormatFileTimestamp(_conversations[index].Timestamp) : "";
+        var fileName = string.IsNullOrEmpty(stamp) ? name : $"{stamp} {name}";
+        var defaultPath = Path.Combine(projectRoot, "Logs", $"{fileName}.md");
         var path = EditorUtility.SaveFilePanel("Save extracted conversation", Path.GetDirectoryName(defaultPath), Path.GetFileName(defaultPath), "md");
         if (string.IsNullOrEmpty(path)) return;
 
@@ -528,18 +529,26 @@ class ConversationExtractorWindow : EditorWindow
     }
 
     static string FormatDate(long timestamp)
+      => TryGetLocalTime(timestamp, out var time) ? time.ToString("yyyy-MM-dd HH:mm") : "";
+
+    // Date and time for filenames; colon-free so it is filesystem-safe and sortable.
+    static string FormatFileTimestamp(long timestamp)
+      => TryGetLocalTime(timestamp, out var time) ? time.ToString("yyyy-MM-dd HH-mm") : "";
+
+    static bool TryGetLocalTime(long timestamp, out DateTimeOffset time)
     {
-        if (timestamp <= 0) return "";
+        time = default;
+        if (timestamp <= 0) return false;
         try
         {
-            var time = timestamp > 1_000_000_000_000L
+            time = (timestamp > 1_000_000_000_000L
               ? DateTimeOffset.FromUnixTimeMilliseconds(timestamp)
-              : DateTimeOffset.FromUnixTimeSeconds(timestamp);
-            return time.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
+              : DateTimeOffset.FromUnixTimeSeconds(timestamp)).ToLocalTime();
+            return true;
         }
         catch
         {
-            return "";
+            return false;
         }
     }
 
