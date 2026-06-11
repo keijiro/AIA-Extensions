@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-06-11
+
+### Added
+
+- Added MCP tools (`aia_list_conversations` and `aia_extract_conversation`) that expose the Conversation Extractor over the Unity MCP bridge, letting AI clients list conversations and export them to Markdown files without opening the window.
+- Added a metadata header (date, task ID, and message count) and tool-call results to the exported Markdown.
+
+### Changed
+
+- Reformatted the exported Markdown with emoji role headings and collapsible sections for thoughts and tool calls.
+- Changed the saved conversation filename format to a `yyyyMMdd-HHmm` timestamp followed by the title and conversation id.
+- Updated project and package metadata for AI Assistant 2.11.0-pre.2.
+
 ## [1.2.1] - 2026-06-05
 
 ### Changed
