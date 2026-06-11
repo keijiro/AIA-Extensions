@@ -2,7 +2,8 @@
     "name": "AIAssistantExtensions.Editor",
     "rootNamespace": "",
     "references": [
-        "GUID:aa454c0a07d2f4c6d8e03da09405270b"
+        "GUID:aa454c0a07d2f4c6d8e03da09405270b",
+        "Unity.AI.MCP.Editor"
     ],
     "includePlatforms": [
         "Editor"
