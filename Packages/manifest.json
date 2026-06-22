@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.unity.ai.assistant": "2.12.0-pre.2",
     "com.unity.inputsystem": "1.19.0",
     "com.unity.render-pipelines.universal": "17.3.0"
   }
